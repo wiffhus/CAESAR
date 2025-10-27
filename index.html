@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caesar - レシート管理</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #666;
+            background: #fafafa;
+        }
+
+        .upload-area.drag-over {
+            border-color: #333;
+            background: #f0f0f0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #333;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #555;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .thumbnails {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .thumbnail {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .thumbnail:hover {
+            border-color: #333;
+        }
+
+        .thumbnail.selected {
+            border-color: #333;
+            box-shadow: 0 0 0 2px #333;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .thumbnail .remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .receipt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .receipt-item {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .receipt-item:hover {
+            border-color: #666;
+        }
+
+        .receipt-item.selected {
+            border-color: #333;
+            background: #fafafa;
+        }
+
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .receipt-content {
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .receipt-content[contenteditable="true"] {
+            border: 1px solid #333;
+            outline: none;
+        }
+
+        .folder-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .folder-item {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .folder-item:hover {
+            border-color: #333;
+        }
+
+        .folder-item.active {
+            border-color: #333;
+            background: #333;
+            color: #fff;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .search-result {
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .error {
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            color: #856404;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .folder-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .folder-suggestion {
+            padding: 8px 15px;
+            background: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-suggestion:hover {
+            background: #d0d0d0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .thumbnails {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .thumbnail img {
+                height: 100px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <i data-lucide="receipt"></i>
+                Caesar
+            </h1>
+        </header>
+
+        <!-- CaeSearch -->
+        <div class="section">
+            <div class="section-title">
+                <i data-lucide="search"></i>
+                CaeSearch
+            </div>
+            <input type="text" class="search-input" id="searchInput" placeholder="例：5月15日の買い物の合計金額は？">
+            <button class="btn-primary" onclick="performSearch()">
+                <i data-lucide="send"></i>
+                検索
+            </button>
+            <div id="searchResult" class="search-result" style="display: none; margin-top: 15px;"></div>
+            <div id="searchLoading" class="loading">検索中...</div>
+        </div>
+
+        <!-- フォルダ管理 -->
+        <div class="section">
+            <div class="section-title">
+                <i data-lucide="folder"></i>
+                フォルダ
+            </div>
+            <div class="folder-list" id="folderList">
+                <!-- フォルダがここに表示されます -->
+            </div>
+            <button class="btn-secondary" onclick="showAddFolderModal()">
+                <i data-lucide="folder-plus"></i>
+                フォルダを追加
+            </button>
+        </div>
+
+        <!-- 画像・テキスト取り込み -->
+        <div class="section">
+            <div class="section-title">
+                <i data-lucide="upload"></i>
+                レシート取り込み
+            </div>
+            
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <i data-lucide="image" style="width: 48px; height: 48px; margin: 0 auto 10px; display: block;"></i>
+                <p>画像をドラッグ＆ドロップ または クリックして選択</p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">JPG, PNG, PDF対応 / 複数選択可能</p>
+            </div>
+            
+            <input type="file" id="fileInput" multiple accept="image/*,.pdf" style="display: none;" onchange="handleFiles(this.files)">
+            
+            <div class="button-group">
+                <button class="btn-secondary" onclick="document.getElementById('cameraInput').click()">
+                    <i data-lucide="camera"></i>
+                    カメラで撮影
+                </button>
+                <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">
+                    <i data-lucide="folder-open"></i>
+                    アルバムから選択
+                </button>
+            </div>
+            
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFiles(this.files)">
+            
+            <div id="thumbnails" class="thumbnails"></div>
+            
+            <div class="button-group" id="imageButtons" style="display: none; margin-top: 15px;">
+                <button class="btn-primary" onclick="analyzeImages()">
+                    <i data-lucide="scan"></i>
+                    選択した画像を解析
+                </button>
+                <button class="btn-danger" onclick="clearImages()">
+                    <i data-lucide="trash-2"></i>
+                    すべてクリア
+                </button>
+            </div>
+            
+            <div id="analysisLoading" class="loading">解析中...</div>
+            
+            <textarea id="textInput" placeholder="テキストを直接入力（メールのコピペなど）"></textarea>
+            <button class="btn-secondary" onclick="addTextAsReceipt()">
+                <i data-lucide="file-text"></i>
+                テキストをレシートとして追加
+            </button>
+        </div>
+
+        <!-- 解析結果 -->
+        <div class="section" id="resultsSection" style="display: none;">
+            <div class="section-title">
+                <i data-lucide="list"></i>
+                解析結果
+            </div>
+            <div id="errorMessage" class="error"></div>
+            <div id="receiptList" class="receipt-list"></div>
+            
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="showSaveFolderModal()">
+                    <i data-lucide="save"></i>
+                    選択したレシートを保存
+                </button>
+            </div>
+        </div>
+
+        <!-- フォルダ保存モーダル用の入力エリア -->
+        <div id="saveFolderModal" class="section" style="display: none;">
+            <div class="section-title">
+                <i data-lucide="folder-input"></i>
+                フォルダに保存
+            </div>
+            <div id="folderSuggestions" class="folder-suggestions"></div>
+            <input type="text" id="folderNameInput" placeholder="フォルダ名を入力">
+            <div class="button-group">
+                <button class="btn-primary" onclick="saveToFolder()">
+                    <i data-lucide="check"></i>
+                    保存
+                </button>
+                <button class="btn-secondary" onclick="closeSaveFolderModal()">
+                    <i data-lucide="x"></i>
+                    キャンセル
+                </button>
+            </div>
+            <div id="folderLoading" class="loading">フォルダ名を提案中...</div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let uploadedImages = [];
+        let receipts = [];
+        let folders = [];
+        let selectedFolder = null;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadFolders();
+            setupDragAndDrop();
+        });
+
+        // ドラッグ&ドロップ設定
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('drag-over');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('drag-over');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        // ファイル処理
+        function handleFiles(files) {
+            const thumbnailsDiv = document.getElementById('thumbnails');
+            const imageButtons = document.getElementById('imageButtons');
+            
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imageData = e.target.result;
+                        uploadedImages.push({ file, data: imageData });
+                        
+                        const thumbnail = createThumbnail(imageData, uploadedImages.length - 1);
+                        thumbnailsDiv.appendChild(thumbnail);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            if (files.length > 0) {
+                imageButtons.style.display = 'flex';
+            }
+            
+            lucide.createIcons();
+        }
+
+        // サムネイル作成
+        function createThumbnail(imageData, index) {
+            const div = document.createElement('div');
+            div.className = 'thumbnail';
+            div.dataset.index = index;
+            
+            div.innerHTML = `
+                <img src="${imageData}" alt="Receipt ${index + 1}">
+                <button class="remove" onclick="removeImage(${index}, event)">
+                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+            `;
+            
+            div.onclick = (e) => {
+                if (!e.target.closest('.remove')) {
+                    div.classList.toggle('selected');
+                }
+            };
+            
+            return div;
+        }
+
+        // 画像削除
+        function removeImage(index, event) {
+            event.stopPropagation();
+            uploadedImages.splice(index, 1);
+            renderThumbnails();
+        }
+
+        // サムネイル再描画
+        function renderThumbnails() {
+            const thumbnailsDiv = document.getElementById('thumbnails');
+            thumbnailsDiv.innerHTML = '';
+            
+            uploadedImages.forEach((img, index) => {
+                const thumbnail = createThumbnail(img.data, index);
+                thumbnailsDiv.appendChild(thumbnail);
+            });
+            
+            document.getElementById('imageButtons').style.display = 
+                uploadedImages.length > 0 ? 'flex' : 'none';
+            
+            lucide.createIcons();
+        }
+
+        // 画像クリア
+        function clearImages() {
+            if (confirm('すべての画像を削除しますか？')) {
+                uploadedImages = [];
+                renderThumbnails();
+            }
+        }
+
+        // 画像解析
+        async function analyzeImages() {
+            const selected = document.querySelectorAll('.thumbnail.selected');
+            const imagesToAnalyze = selected.length > 0 
+                ? Array.from(selected).map(el => uploadedImages[el.dataset.index])
+                : uploadedImages;
+            
+            if (imagesToAnalyze.length === 0) {
+                alert('解析する画像を選択してください');
+                return;
+            }
+            
+            const loading = document.getElementById('analysisLoading');
+            loading.classList.add('active');
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'analyze',
+                        images: imagesToAnalyze.map(img => img.data)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    receipts = result.receipts;
+                    displayReceipts();
+                } else {
+                    showError(result.error || '解析に失敗しました');
+                }
+            } catch (error) {
+                showError('エラーが発生しました: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // テキストをレシートとして追加
+        function addTextAsReceipt() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                alert('テキストを入力してください');
+                return;
+            }
+            
+            receipts.push({
+                id: Date.now(),
+                text: text,
+                editable: true
+            });
+            
+            displayReceipts();
+            textInput.value = '';
+        }
+
+        // レシート表示
+        function displayReceipts() {
+            const receiptList = document.getElementById('receiptList');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            receiptList.innerHTML = '';
+            
+            receipts.forEach((receipt, index) => {
+                const div = document.createElement('div');
+                div.className = 'receipt-item';
+                div.dataset.index = index;
+                
+                div.innerHTML = `
+                    <div class="receipt-header">
+                        <strong>レシート ${index + 1}</strong>
+                        <button class="btn-secondary" style="padding: 5px 10px;" onclick="toggleEdit(${index}, event)">
+                            <i data-lucide="edit" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                    <div class="receipt-content" id="receipt-${index}" contenteditable="false">${receipt.text}</div>
+                `;
+                
+                div.onclick = (e) => {
+                    if (!e.target.closest('button') && !e.target.closest('.receipt-content')) {
+                        div.classList.toggle('selected');
+                    }
+                };
+                
+                receiptList.appendChild(div);
+            });
+            
+            resultsSection.style.display = 'block';
+            lucide.createIcons();
+        }
+
+        // 編集切替
+        function toggleEdit(index, event) {
+            event.stopPropagation();
+            const content = document.getElementById(`receipt-${index}`);
+            const isEditable = content.getAttribute('contenteditable') === 'true';
+            
+            content.setAttribute('contenteditable', !isEditable);
+            
+            if (!isEditable) {
+                content.focus();
+            } else {
+                receipts[index].text = content.textContent;
+            }
+        }
+
+        // フォルダ保存モーダル表示
+        async function showSaveFolderModal() {
+            const selected = document.querySelectorAll('.receipt-item.selected');
+            
+            if (selected.length === 0) {
+                alert('保存するレシートを選択してください');
+                return;
+            }
+            
+            const modal = document.getElementById('saveFolderModal');
+            modal.style.display = 'block';
+            
+            // AIにフォルダ名を提案させる
+            const loading = document.getElementById('folderLoading');
+            loading.classList.add('active');
+            
+            const selectedReceipts = Array.from(selected).map(el => {
+                const index = el.dataset.index;
+                return receipts[index].text;
+            });
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'suggestFolder',
+                        receipts: selectedReceipts
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayFolderSuggestions(result.suggestions);
+                }
+            } catch (error) {
+                console.error('フォルダ名提案エラー:', error);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // フォルダ名提案表示
+        function displayFolderSuggestions(suggestions) {
+            const container = document.getElementById('folderSuggestions');
+            container.innerHTML = '';
+            
+            suggestions.forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'folder-suggestion';
+                div.textContent = name;
+                div.onclick = () => {
+                    document.getElementById('folderNameInput').value = name;
+                };
+                container.appendChild(div);
+            });
+        }
+
+        // フォルダ保存モーダルを閉じる
+        function closeSaveFolderModal() {
+            document.getElementById('saveFolderModal').style.display = 'none';
+            document.getElementById('folderNameInput').value = '';
+            document.getElementById('folderSuggestions').innerHTML = '';
+        }
+
+        // フォルダに保存
+        async function saveToFolder() {
+            const folderName = document.getElementById('folderNameInput').value.trim();
+            const selected = document.querySelectorAll('.receipt-item.selected');
+            
+            if (!folderName) {
+                alert('フォルダ名を入力してください');
+                return;
+            }
+            
+            const selectedReceipts = Array.from(selected).map(el => {
+                const index = el.dataset.index;
+                return receipts[index];
+            });
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'saveToFolder',
+                        folderName: folderName,
+                        receipts: selectedReceipts,
+                        images: uploadedImages.map(img => img.data)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('保存しました');
+                    closeSaveFolderModal();
+                    loadFolders();
+                    
+                    // 保存したレシートを削除
+                    Array.from(selected).forEach(el => {
+                        const index = parseInt(el.dataset.index);
+                        receipts.splice(index, 1);
+                    });
+                    displayReceipts();
+                } else {
+                    showError(result.error || '保存に失敗しました');
+                }
+            } catch (error) {
+                showError('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        // フォルダ読み込み
+        async function loadFolders() {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getFolders' })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    folders = result.folders;
+                    displayFolders();
+                }
+            } catch (error) {
+                console.error('フォルダ読み込みエラー:', error);
+            }
+        }
+
+        // フォルダ表示
+        function displayFolders() {
+            const folderList = document.getElementById('folderList');
+            folderList.innerHTML = '';
+            
+            folders.forEach(folder => {
+                const div = document.createElement('div');
+                div.className = 'folder-item';
+                if (selectedFolder === folder) {
+                    div.classList.add('active');
+                }
+                
+                div.innerHTML = `
+                    <i data-lucide="folder"></i>
+                    ${folder}
+                `;
+                
+                div.onclick = () => selectFolder(folder);
+                folderList.appendChild(div);
+            });
+            
+            lucide.createIcons();
+        }
+
+        // フォルダ選択
+        function selectFolder(folder) {
+            selectedFolder = selectedFolder === folder ? null : folder;
+            displayFolders();
+        }
+
+        // フォルダ追加モーダル
+        function showAddFolderModal() {
+            const name = prompt('新しいフォルダ名を入力してください');
+            if (name && name.trim()) {
+                addFolder(name.trim());
+            }
+        }
+
+        // フォルダ追加
+        async function addFolder(name) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'addFolder',
+                        folderName: name
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadFolders();
+                } else {
+                    alert('フォルダの追加に失敗しました');
+                }
+            } catch (error) {
+                alert('エラーが発生しました: ' + error.message);
+            }
+        }
+
+        // 検索実行
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                alert('検索クエリを入力してください');
+                return;
+            }
+            
+            const loading = document.getElementById('searchLoading');
+            const resultDiv = document.getElementById('searchResult');
+            
+            loading.classList.add('active');
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'search',
+                        query: query
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.textContent = result.answer;
+                    resultDiv.style.display = 'block';
+                } else {
+                    showError(result.error || '検索に失敗しました');
+                }
+            } catch (error) {
+                showError('エラーが発生しました: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // エラー表示
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
